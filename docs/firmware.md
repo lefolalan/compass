@@ -1,6 +1,6 @@
 # Firmware e-paper pour Feather ESP32-C6
 
-Firmware Zephyr qui pilote un écran e-paper Waveshare 4,2 pouces (400x300, noir et blanc) depuis une carte Adafruit ESP32-C6 Feather. Au démarrage, il rejoint le réseau Wi-Fi, affiche un écran d'accueil qui donne son adresse IP, puis affiche chaque image qu'un client lui envoie. Le protocole d'envoi et l'outil associé sont décrits dans [upload.md](upload.md). Les sources se trouvent dans le dossier `fw/` du dépôt.
+Firmware Zephyr qui pilote un écran e-paper Waveshare 4,2 pouces (400x300, noir et blanc) depuis une carte Adafruit ESP32-C6 Feather. Au démarrage, il rejoint le réseau Wi-Fi, affiche un écran d'accueil qui donne son adresse IP et l'état de sa batterie, puis affiche chaque image qu'un client lui envoie. Le protocole d'envoi et l'outil associé sont décrits dans [upload.md](upload.md). Les sources se trouvent dans le dossier `fw/` du dépôt.
 
 ## Matériel
 

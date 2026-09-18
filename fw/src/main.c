@@ -1,9 +1,11 @@
 /*
  * Joins the Wi-Fi network, shows a boot screen that gives the address of the
- * board, then displays every frame a client uploads.
+ * board and the state of its battery, then displays every frame a client
+ * uploads.
  */
 
 #include <errno.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include <zephyr/device.h>
@@ -14,6 +16,7 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
 
+#include "battery.h"
 #include "canvas.h"
 #include "panel.h"
 #include "picture.h"
@@ -34,7 +37,10 @@ LOG_MODULE_REGISTER(app, LOG_LEVEL_INF);
 
 #define WIFI_OFFLINE_TEXT "Wi-Fi hors ligne"
 
+#define BATTERY_UNKNOWN_TEXT "Batterie inconnue"
+
 static const struct device *const display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+static const struct device *const gauge = DEVICE_DT_GET(DT_ALIAS(fuel_gauge0));
 
 static void draw_centered_text(int y, const struct font *font, enum canvas_color color,
 			       const char *text)
@@ -44,23 +50,39 @@ static void draw_centered_text(int y, const struct font *font, enum canvas_color
 	canvas_draw_text(x, y, font, color, text);
 }
 
-static void compose_boot_screen(const char *network_line)
+/* battery is NULL when the fuel gauge could not be read. */
+static void compose_boot_screen(const char *network_line, const struct battery_reading *battery)
 {
 	char port_line[sizeof("Port TCP 65535")];
-	const char *lines[] = {
+	char charge_line[sizeof("Batterie 255 %")];
+	char voltage_line[sizeof("Tension 99,99 V")];
+	/* One line would not fit next to the picture, hence two for the battery. */
+	const char *lines[6] = {
 		"Zephyr RTOS",
 		"ESP32-C6 Feather",
 		network_line,
 		port_line,
 	};
+	size_t line_count = 4;
 	const int body_top = HEADER_HEIGHT;
 	const int body_height = CANVAS_HEIGHT - HEADER_HEIGHT;
-	const int text_height = ARRAY_SIZE(lines) * font_body.height +
-				(ARRAY_SIZE(lines) - 1) * LINE_SPACING;
 	const int text_x = MARGIN + picture.width + MARGIN;
+	int text_height;
 	int y;
 
 	snprintk(port_line, sizeof(port_line), "Port TCP %d", CONFIG_APP_UPLOAD_PORT);
+
+	if (battery != NULL) {
+		snprintk(charge_line, sizeof(charge_line), "Batterie %u %%", battery->charge_pct);
+		snprintk(voltage_line, sizeof(voltage_line), "Tension %d,%02d V",
+			 battery->voltage_mv / 1000, battery->voltage_mv % 1000 / 10);
+		lines[line_count++] = charge_line;
+		lines[line_count++] = voltage_line;
+	} else {
+		lines[line_count++] = BATTERY_UNKNOWN_TEXT;
+	}
+
+	text_height = line_count * font_body.height + (line_count - 1) * LINE_SPACING;
 
 	canvas_clear(CANVAS_WHITE);
 
@@ -71,7 +93,7 @@ static void compose_boot_screen(const char *network_line)
 	canvas_draw_bitmap(MARGIN, body_top + (body_height - picture.height) / 2, &picture);
 
 	y = body_top + (body_height - text_height) / 2;
-	for (size_t i = 0; i < ARRAY_SIZE(lines); i++) {
+	for (size_t i = 0; i < line_count; i++) {
 		canvas_draw_text(text_x, y, &font_body, CANVAS_BLACK, lines[i]);
 		y += font_body.height + LINE_SPACING;
 	}
@@ -121,6 +143,8 @@ static void bring_up_network(char *network_line, size_t network_line_size)
 int main(void)
 {
 	char network_line[MAX(NET_IPV4_ADDR_LEN, sizeof(WIFI_OFFLINE_TEXT))];
+	struct battery_reading battery;
+	bool battery_known;
 	int err;
 
 	LOG_INF("Initializing the panel");
@@ -133,6 +157,11 @@ int main(void)
 
 	bring_up_network(network_line, sizeof(network_line));
 
+	battery_known = battery_read(gauge, &battery) == 0;
+	if (battery_known) {
+		LOG_INF("Battery at %u mV, %u %%", battery.voltage_mv, battery.charge_pct);
+	}
+
 	/*
 	 * A stalled panel must not take the network service down with it, so
 	 * the server starts either way and tells its clients about the panel.
@@ -140,7 +169,7 @@ int main(void)
 	if (panel_is_busy()) {
 		LOG_ERR("Boot screen skipped, the panel init is still stalled");
 	} else {
-		compose_boot_screen(network_line);
+		compose_boot_screen(network_line, battery_known ? &battery : NULL);
 
 		LOG_INF("Refreshing the panel, this takes a few seconds");
 
