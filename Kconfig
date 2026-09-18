@@ -1,0 +1,9 @@
+mainmenu "E-paper notes firmware"
+
+config APP_DISPLAY_FLIP_180
+	bool "Rotate the rendered frame by 180 degrees"
+	help
+	  Enable when the panel is mounted with the flat cable on the
+	  opposite side and the picture shows upside down.
+
+source "Kconfig.zephyr"

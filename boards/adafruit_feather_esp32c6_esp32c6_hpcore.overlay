@@ -1,0 +1,49 @@
+/*
+ * Waveshare 4.2" e-Paper module wired to the Feather headers.
+ *
+ *   DIN  -> IO22 (MOSI)
+ *   CLK  -> IO21 (SCK)
+ *   CS   -> IO2
+ *   DC   -> IO3
+ *   RST  -> IO5
+ *   BUSY -> IO6
+ *
+ * The display controller node, labelled epd, depends on the panel revision. It
+ * comes from panels/waveshare_4in2_<PANEL>.overlay, see CMakeLists.txt.
+ */
+
+/ {
+	chosen {
+		zephyr,display = &epd;
+	};
+
+	epd_bus: mipi_dbi_epd {
+		compatible = "zephyr,mipi-dbi-spi";
+		spi-dev = <&spi2>;
+		dc-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio0 5 GPIO_ACTIVE_LOW>;
+		/* The module has no MISO line. */
+		write-only;
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
+};
+
+&pinctrl {
+	/* SCK and MOSI only, which leaves IO8 and IO23 free. */
+	spim2_epd: spim2_epd {
+		group1 {
+			pinmux = <SPIM2_SCLK_GPIO21>;
+		};
+
+		group2 {
+			pinmux = <SPIM2_MOSI_GPIO22>;
+			output-low;
+		};
+	};
+};
+
+&spi2 {
+	pinctrl-0 = <&spim2_epd>;
+	cs-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+};

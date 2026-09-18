@@ -1,0 +1,26 @@
+/*
+ * V1 panel (GDEW042T2), UC8176 controller. BUSY idles high and is active low.
+ *
+ * Settings follow the in-tree waveshare_epaper_gdew042t2 shield.
+ */
+
+&epd_bus {
+	epd: uc8176@0 {
+		compatible = "gooddisplay,gdew042t2", "ultrachip,uc8176";
+		reg = <0>;
+		/* Initialized from main(), see show_screen(). */
+		zephyr,deferred-init;
+		mipi-max-frequency = <4000000>;
+		width = <400>;
+		height = <300>;
+		busy-gpios = <&gpio0 6 GPIO_ACTIVE_LOW>;
+
+		softstart = [17 17 17];
+
+		full {
+			pwr = [03 00 26 26 09];
+			cdi = <0xd7>;
+			tcon = <0x22>;
+		};
+	};
+};

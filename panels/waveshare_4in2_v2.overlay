@@ -1,0 +1,34 @@
+/*
+ * V2 panel ("V2" sticker on the back), SSD1683 controller. BUSY idles low and
+ * is active high.
+ */
+
+&epd_bus {
+	epd: ssd1683@0 {
+		compatible = "solomon,ssd1683";
+		reg = <0>;
+		/* Initialized from main(), see show_screen(). */
+		zephyr,deferred-init;
+		mipi-max-frequency = <4000000>;
+		/*
+		 * The driver names the 300 gate lines "width" and the 400
+		 * source lines "height". Rotation 270 selects the X-major scan
+		 * of the Waveshare reference code, which gives a 400x300
+		 * landscape frame.
+		 */
+		width = <300>;
+		height = <400>;
+		rotation = <270>;
+		busy-gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>;
+		/* Internal temperature sensor selects the OTP waveform. */
+		tssv = <0x80>;
+
+		/*
+		 * No partial profile. The driver then keeps the red RAM cleared,
+		 * as the reference code does for a full refresh.
+		 */
+		full {
+			border-waveform = <0x05>;
+		};
+	};
+};
