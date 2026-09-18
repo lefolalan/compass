@@ -22,12 +22,13 @@ from pathlib import Path
 from google.protobuf import proto
 from grpc_tools import protoc
 
+# The tools run as plain files, so the modules they share are found by path.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from frame_format import FRAME_BYTES, PANEL_HEIGHT, PANEL_WIDTH
+
 PROTO_DIR = Path(__file__).resolve().parents[2] / "fw" / "proto"
 PROTO_FILE = "epaper.proto"
-
-PANEL_WIDTH = 400
-PANEL_HEIGHT = 300
-FRAME_BYTES = PANEL_WIDTH // 8 * PANEL_HEIGHT
 
 # CONFIG_APP_UPLOAD_PORT in fw/Kconfig.
 DEFAULT_PORT = 7400
