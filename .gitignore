@@ -2,3 +2,4 @@
 /fw/wifi.conf
 
 __pycache__/
+.pytest_cache/

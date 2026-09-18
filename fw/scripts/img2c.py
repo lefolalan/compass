@@ -1,29 +1,32 @@
 #!/usr/bin/env python3
 """Convert a picture into a 1 bpp struct canvas_bitmap, dithered for e-paper.
 
-CMake runs this script on assets/picture.png at build time.
+CMake runs this script on assets/picture.png at build time. The host tool
+tools/convert/convert.py imports load_gray() and to_ink(), so that the firmware
+and the host tools share one conversion.
 """
 
 import argparse
 from pathlib import Path
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageOps
 
 BYTES_PER_LINE = 12
 
 
 def load_gray(path):
-    """Return the picture as a mode "L" image on a white background."""
-    image = Image.open(path).convert("RGBA")
+    """Return the picture as an upright mode "L" image on a white background."""
+    # Cameras store a portrait shot sideways and record the rotation in EXIF.
+    image = ImageOps.exif_transpose(Image.open(path)).convert("RGBA")
     # Transparent areas show as paper white.
     background = Image.new("RGBA", image.size, "white")
     return Image.alpha_composite(background, image).convert("L")
 
 
-def to_ink(gray):
+def to_ink(gray, dither=Image.Dither.FLOYDSTEINBERG):
     """Return a mode "1" image where a set pixel is black ink."""
-    # Converting to mode "1" applies Floyd-Steinberg dithering.
-    return ImageChops.invert(gray.convert("1"))
+    # Mode "1" of Pillow sets a bit for white, the opposite of struct canvas_bitmap.
+    return ImageChops.invert(gray.convert("1", dither=dither))
 
 
 def load_ink(path, max_width, max_height):

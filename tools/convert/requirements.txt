@@ -1,0 +1,2 @@
+# Lower bound is the version the tool was validated with.
+Pillow>=12.3
