@@ -18,7 +18,7 @@ Firmware Zephyr qui pilote un écran e-paper Waveshare 4,2 pouces (400x300, noir
 | RST | IO5 | Reset |
 | BUSY | IO6 | Occupation du contrôleur |
 
-Alimenter le module en 3,3 V et pas en 5 V, car ses sorties suivent le niveau de VCC et les GPIO de l'ESP32-C6 ne tolèrent pas le 5 V. Le câblage est décrit côté logiciel dans `boards/adafruit_feather_esp32c6_esp32c6_hpcore.overlay`.
+Alimenter le module en 3,3 V et pas en 5 V, car ses sorties suivent le niveau de VCC et les GPIO de l'ESP32-C6 ne tolèrent pas le 5 V. Le câblage est décrit côté logiciel dans `fw/boards/adafruit_feather_esp32c6_esp32c6_hpcore.overlay`.
 
 ## Révision de la dalle
 
@@ -58,8 +58,8 @@ Zephyr est épinglé sur un SHA de `main` dans `west.yml`, car aucune release ne
 Depuis le dossier du workspace, avec le venv activé :
 
 ```sh
-west build firmware                          # Dalle v1 par défaut
-west build -p always firmware -- -DPANEL=v2  # Dalle v2
+west build firmware/fw                       # Dalle v1 par défaut
+west build -p always firmware/fw -- -DPANEL=v2  # Dalle v2
 west flash
 west espressif monitor                       # Quitter avec Ctrl+]
 ```
@@ -68,10 +68,10 @@ Si plusieurs ports série sont présents, préciser le port avec `west flash --e
 
 ## Personnaliser l'écran
 
-- Le texte et la mise en page se trouvent dans `compose_screen()` du fichier `src/main.c`. Les chaînes sont en UTF-8 et les polices couvrent l'ASCII, le Latin-1 et quelques caractères français supplémentaires. Un caractère absent s'affiche `?`.
-- L'image est le fichier `assets/picture.png`. Elle est réduite pour tenir dans 160x160 pixels puis tramée en noir et blanc à chaque build. Les dimensions maximales se règlent dans `CMakeLists.txt`.
-- Les polices de `src/fonts/` sont générées par `scripts/font2c.py` à partir d'un fichier TrueType, puis versionnées. La commande d'exemple figure en tête du script.
-- Si l'image apparaît tête en bas par rapport au montage, ajouter `CONFIG_APP_DISPLAY_FLIP_180=y` dans `prj.conf`.
+- Le texte et la mise en page se trouvent dans `compose_screen()` du fichier `fw/src/main.c`. Les chaînes sont en UTF-8 et les polices couvrent l'ASCII, le Latin-1 et quelques caractères français supplémentaires. Un caractère absent s'affiche `?`.
+- L'image est le fichier `fw/assets/picture.png`. Elle est réduite pour tenir dans 160x160 pixels puis tramée en noir et blanc à chaque build. Les dimensions maximales se règlent dans `fw/CMakeLists.txt`.
+- Les polices de `fw/src/fonts/` sont générées par `fw/scripts/font2c.py` à partir d'un fichier TrueType, puis versionnées. La commande d'exemple figure en tête du script.
+- Si l'image apparaît tête en bas par rapport au montage, ajouter `CONFIG_APP_DISPLAY_FLIP_180=y` dans `fw/prj.conf`.
 
 Un rafraîchissement complet dure plusieurs secondes et fait clignoter la dalle. Il faut donc composer tout l'écran avant d'appeler `canvas_flush()`.
 

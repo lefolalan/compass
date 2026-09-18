@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.20.0)
 
-# Single-board firmware, so "west build firmware" needs no -b option.
+# Single-board firmware, so "west build firmware/fw" needs no -b option.
 set(BOARD adafruit_feather_esp32c6/esp32c6/hpcore)
 
 # Panel fitted on the Waveshare module. The "Rev2.1" marking of the PCB names
 # the driver board, not the panel.
 #   v1: UC8176 controller, BUSY idles high.
 #   v2: SSD1683 controller, "V2" sticker on the back, BUSY idles low.
-# Select with "west build firmware -- -DPANEL=v2".
+# Select with "west build firmware/fw -- -DPANEL=v2".
 set(PANEL v1 CACHE STRING "Waveshare 4.2 inch panel revision (v1 or v2)")
 set(panel_overlay ${CMAKE_CURRENT_SOURCE_DIR}/panels/waveshare_4in2_${PANEL}.overlay)
 if(NOT EXISTS ${panel_overlay})
