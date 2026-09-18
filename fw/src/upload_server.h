@@ -11,7 +11,9 @@
 
 /*
  * Receives a full screen frame that already passed validation. Returns 0 once
- * the frame is on the panel, or a negative errno.
+ * the frame is on the panel, or a negative errno. The client is told apart
+ * -EBUSY, a panel still held by an earlier call, and -ETIMEDOUT, a refresh
+ * that did not finish in time.
  */
 typedef int (*upload_show_frame_t)(const struct canvas_bitmap *frame);
 

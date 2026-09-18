@@ -98,6 +98,18 @@ static void reply(int client, epaper_Response_Status status, const char *detail)
 	}
 }
 
+static const char *display_error_detail(int err)
+{
+	switch (err) {
+	case -EBUSY:
+		return "the panel is still busy with an earlier call, retry later";
+	case -ETIMEDOUT:
+		return "the panel did not finish the refresh in time";
+	default:
+		return "the panel refused the frame";
+	}
+}
+
 static void handle_show_frame(int client, const epaper_ShowFrame *frame,
 			      upload_show_frame_t show_frame)
 {
@@ -123,7 +135,9 @@ static void handle_show_frame(int client, const epaper_ShowFrame *frame,
 
 	err = show_frame(&bitmap);
 	if (err < 0) {
-		reply(client, epaper_Response_Status_STATUS_DISPLAY_ERROR, "panel update failed");
+		LOG_ERR("Frame not shown (%d)", err);
+		reply(client, epaper_Response_Status_STATUS_DISPLAY_ERROR,
+		      display_error_detail(err));
 		return;
 	}
 

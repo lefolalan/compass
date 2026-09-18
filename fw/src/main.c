@@ -15,6 +15,7 @@
 #include <zephyr/sys/util.h>
 
 #include "canvas.h"
+#include "panel.h"
 #include "picture.h"
 #include "upload_server.h"
 #include "wifi_link.h"
@@ -24,9 +25,6 @@ LOG_MODULE_REGISTER(app, LOG_LEVEL_INF);
 #define MARGIN        16
 #define HEADER_HEIGHT 64
 #define LINE_SPACING  8
-
-/* A healthy panel finishes its init or a full refresh in about 5 s. */
-#define PANEL_STALL_WARNING_DELAY K_SECONDS(20)
 
 /*
  * Joining plus DHCP takes about 5 s. Past this delay the boot screen goes up
@@ -79,51 +77,17 @@ static void compose_boot_screen(const char *network_line)
 	}
 }
 
-static void panel_stall_warning(struct k_work *work)
+static int show_uploaded_frame(const struct canvas_bitmap *frame)
 {
-	ARG_UNUSED(work);
+	if (panel_is_busy()) {
+		return -EBUSY;
+	}
 
-	LOG_WRN("Panel still busy. Check the panel supply and flat cable, the BUSY and RST "
-		"wiring, and that the PANEL build option matches the panel revision");
-}
-
-static K_WORK_DELAYABLE_DEFINE(panel_stall_warning_work, panel_stall_warning);
-
-/*
- * The e-paper drivers wait on BUSY without a timeout, so a hardware fault
- * stalls the caller forever. Every blocking display call goes through here, so
- * that the stall at least shows up on the console.
- */
-static int run_with_stall_warning(int (*panel_call)(const struct device *panel))
-{
-	int err;
-
-	k_work_schedule(&panel_stall_warning_work, PANEL_STALL_WARNING_DELAY);
-	err = panel_call(display);
-	k_work_cancel_delayable(&panel_stall_warning_work);
-
-	return err;
-}
-
-static int refresh_panel(void)
-{
-	int err;
+	canvas_draw_bitmap(0, 0, frame);
 
 	LOG_INF("Refreshing the panel, this takes a few seconds");
 
-	err = run_with_stall_warning(canvas_flush);
-	if (err < 0) {
-		LOG_ERR("Panel update failed (%d)", err);
-	}
-
-	return err;
-}
-
-static int show_uploaded_frame(const struct canvas_bitmap *frame)
-{
-	canvas_draw_bitmap(0, 0, frame);
-
-	return refresh_panel();
+	return panel_refresh();
 }
 
 /*
@@ -161,23 +125,29 @@ int main(void)
 
 	LOG_INF("Initializing the panel");
 
-	/*
-	 * The display node is marked zephyr,deferred-init, which moves the
-	 * unbounded wait on BUSY out of the boot sequence, where it would be
-	 * silent.
-	 */
-	err = run_with_stall_warning(device_init);
-	if (err < 0) {
+	err = panel_init(display);
+	if (err < 0 && err != -ETIMEDOUT) {
 		LOG_ERR("Panel initialization failed (%d)", err);
 		return err;
 	}
 
 	bring_up_network(network_line, sizeof(network_line));
 
-	compose_boot_screen(network_line);
-	err = refresh_panel();
-	if (err < 0) {
-		return err;
+	/*
+	 * A stalled panel must not take the network service down with it, so
+	 * the server starts either way and tells its clients about the panel.
+	 */
+	if (panel_is_busy()) {
+		LOG_ERR("Boot screen skipped, the panel init is still stalled");
+	} else {
+		compose_boot_screen(network_line);
+
+		LOG_INF("Refreshing the panel, this takes a few seconds");
+
+		err = panel_refresh();
+		if (err < 0) {
+			LOG_ERR("Boot screen not shown (%d)", err);
+		}
 	}
 
 	return upload_server_run(CONFIG_APP_UPLOAD_PORT, show_uploaded_frame);

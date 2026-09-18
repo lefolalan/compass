@@ -36,6 +36,7 @@ target_include_directories(app PRIVATE src)
 target_sources(app PRIVATE
   src/main.c
   src/canvas.c
+  src/panel.c
   src/upload_server.c
   src/wifi_link.c
   src/fonts/font_title.c
