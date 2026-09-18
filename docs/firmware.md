@@ -69,7 +69,7 @@ cp firmware/fw/wifi.conf.example firmware/fw/wifi.conf
 
 Renseigner ensuite `CONFIG_APP_WIFI_SSID` et `CONFIG_APP_WIFI_PSK` dans ce fichier. Le réseau doit être disponible en 2,4 GHz, seule bande de l'ESP32-C6, avec une sécurité WPA2 ou WPA3 personnelle. Sans ce fichier, le build affiche un avertissement et le firmware ne rejoint aucun réseau.
 
-Le firmware attend une adresse IP pendant 30 s au plus avant d'afficher l'écran d'accueil. Si le réseau n'est pas joignable à temps, l'écran indique `Wi-Fi hors ligne`, puis le driver continue ses tentatives en arrière-plan. L'adresse obtenue plus tard apparaît alors seulement sur la console.
+Le firmware attend une adresse IP pendant 30 s au plus avant d'afficher l'écran d'accueil. Si le réseau n'est pas joignable à temps, l'écran indique `Wi-Fi hors ligne`, puis le driver continue ses tentatives en arrière-plan. Quand la carte obtient ensuite une adresse que l'écran d'accueil n'affiche pas, que le réseau arrive après coup ou que le DHCP attribue une autre adresse après une coupure, le firmware redessine l'écran d'accueil avec cette adresse et une mesure fraîche de la batterie. Ce rafraîchissement attend au moins 180 s après le précédent, délai que le fabricant de la dalle demande entre deux rafraîchissements complets. Une simple perte du Wi-Fi ne redessine rien, et l'écran d'accueil ne revient plus une fois qu'une image envoyée l'a remplacé.
 
 ## Compiler, flasher, lire la console
 

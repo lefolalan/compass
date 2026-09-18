@@ -123,10 +123,13 @@ int wifi_link_join(const char *ssid, const char *psk)
 	return err;
 }
 
-int wifi_link_wait_for_address(k_timeout_t timeout, char *address, size_t address_size)
+int wifi_link_wait_for_address(const char *known, k_timeout_t timeout, char *address,
+			       size_t address_size)
 {
 	const k_timepoint_t deadline = sys_timepoint_calc(timeout);
 	struct net_if *iface = net_if_get_first_wifi();
+	/* Compared before address is written, so that known may be the same buffer. */
+	char text[NET_IPV4_ADDR_LEN];
 
 	if (iface == NULL) {
 		return -ENODEV;
@@ -136,10 +139,14 @@ int wifi_link_wait_for_address(k_timeout_t timeout, char *address, size_t addres
 		const struct net_in_addr *current =
 			net_if_ipv4_get_global_addr(iface, NET_ADDR_PREFERRED);
 
-		if (current != NULL) {
-			if (net_addr_ntop(NET_AF_INET, current, address, address_size) == NULL) {
+		if (current != NULL &&
+		    net_addr_ntop(NET_AF_INET, current, text, sizeof(text)) != NULL &&
+		    strcmp(text, known) != 0) {
+			if (strlen(text) >= address_size) {
 				return -ENOSPC;
 			}
+
+			strcpy(address, text);
 
 			return 0;
 		}
