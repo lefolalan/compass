@@ -1,0 +1,3 @@
+# Lower bounds are the versions the tool was validated with.
+grpcio-tools>=1.84
+protobuf>=7.36

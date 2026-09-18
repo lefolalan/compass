@@ -1,2 +1,4 @@
 # Wi-Fi credentials of the local build, see fw/wifi.conf.example.
 /fw/wifi.conf
+
+__pycache__/
