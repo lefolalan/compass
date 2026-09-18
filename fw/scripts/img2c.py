@@ -12,18 +12,27 @@ from PIL import Image, ImageChops
 BYTES_PER_LINE = 12
 
 
-def load_ink(path, max_width, max_height):
-    """Return a mode "1" image where a set pixel is black ink."""
+def load_gray(path):
+    """Return the picture as a mode "L" image on a white background."""
     image = Image.open(path).convert("RGBA")
     # Transparent areas show as paper white.
     background = Image.new("RGBA", image.size, "white")
-    gray = Image.alpha_composite(background, image).convert("L")
+    return Image.alpha_composite(background, image).convert("L")
+
+
+def to_ink(gray):
+    """Return a mode "1" image where a set pixel is black ink."""
+    # Converting to mode "1" applies Floyd-Steinberg dithering.
+    return ImageChops.invert(gray.convert("1"))
+
+
+def load_ink(path, max_width, max_height):
+    gray = load_gray(path)
 
     if max_width and max_height:
         gray.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
 
-    # Converting to mode "1" applies Floyd-Steinberg dithering.
-    return ImageChops.invert(gray.convert("1"))
+    return to_ink(gray)
 
 
 def format_bytes(data):
