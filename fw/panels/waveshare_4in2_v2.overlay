@@ -7,7 +7,7 @@
 	epd: ssd1683@0 {
 		compatible = "solomon,ssd1683";
 		reg = <0>;
-		/* Initialized from main(), see show_screen(). */
+		/* Initialized from main(). */
 		zephyr,deferred-init;
 		mipi-max-frequency = <4000000>;
 		/*

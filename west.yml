@@ -17,6 +17,12 @@ manifest:
         # when a feature requires them.
         name-allowlist:
           - hal_espressif
+          # The Wi-Fi driver selects MBEDTLS and PSA_CRYPTO for the WPA
+          # handshake.
+          - mbedtls
+          - tf-psa-crypto
+          # Codec of the upload protocol, see fw/proto/epaper.proto.
+          - nanopb
 
   self:
     path: firmware

@@ -6,4 +6,23 @@ config APP_DISPLAY_FLIP_180
 	  Enable when the panel is mounted with the flat cable on the
 	  opposite side and the picture shows upside down.
 
+config APP_WIFI_SSID
+	string "Name of the Wi-Fi network to join"
+	help
+	  Set it in wifi.conf, which stays out of git, and not in prj.conf.
+	  The firmware skips the network when this is empty.
+
+config APP_WIFI_PSK
+	string "WPA2 or WPA3 personal key of the Wi-Fi network"
+	help
+	  Set it in wifi.conf, which stays out of git, and not in prj.conf.
+
+config APP_UPLOAD_PORT
+	int "TCP port of the frame upload server"
+	default 7400
+	range 1 65535
+	help
+	  Port on which the firmware accepts the requests defined in
+	  proto/epaper.proto. tools/upload/upload.py uses the same default.
+
 source "Kconfig.zephyr"

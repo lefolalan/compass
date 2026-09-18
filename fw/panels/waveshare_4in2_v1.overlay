@@ -8,7 +8,7 @@
 	epd: uc8176@0 {
 		compatible = "gooddisplay,gdew042t2", "ultrachip,uc8176";
 		reg = <0>;
-		/* Initialized from main(), see show_screen(). */
+		/* Initialized from main(). */
 		zephyr,deferred-init;
 		mipi-max-frequency = <4000000>;
 		width = <400>;

@@ -1,0 +1,5 @@
+# Copy this file to wifi.conf and fill it in. wifi.conf is ignored by git and
+# CMakeLists.txt merges it into the configuration when it exists.
+# The network must offer 2.4 GHz, which is the only band of the ESP32-C6.
+CONFIG_APP_WIFI_SSID=""
+CONFIG_APP_WIFI_PSK=""

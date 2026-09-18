@@ -1,0 +1,41 @@
+// Upload protocol of the e-paper firmware, shared by the firmware (nanopb) and
+// the host tools (protobuf). docs/upload.md describes the transport.
+
+syntax = "proto3";
+
+package epaper;
+
+// A client sends one Request per TCP connection and reads one Response. The
+// oneof leaves room for other commands without breaking the wire format.
+message Request {
+  oneof command {
+    ShowFrame show_frame = 1;
+  }
+}
+
+// Replaces the whole screen, then runs one full refresh of the panel.
+message ShowFrame {
+  // Both must match the panel, 400 by 300.
+  uint32 width = 1;
+  uint32 height = 2;
+
+  // 1 bpp, row-major, MSB first, a set bit is black ink. This is the raster
+  // of a binary PBM file, and the layout of struct canvas_bitmap.
+  bytes pixels = 3;
+}
+
+message Response {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_OK = 1;
+    // The request could not be decoded or does not fit the panel.
+    STATUS_INVALID_REQUEST = 2;
+    // The panel refused the frame. The firmware log holds the error code.
+    STATUS_DISPLAY_ERROR = 3;
+  }
+
+  Status status = 1;
+
+  // Human readable reason, empty on success.
+  string detail = 2;
+}

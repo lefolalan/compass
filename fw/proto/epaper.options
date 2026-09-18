@@ -1,0 +1,7 @@
+# nanopb allocation limits, so that every message is a fixed size C struct.
+
+# One full 400x300 frame at 1 bpp. upload_server.c asserts at build time that
+# this matches the canvas.
+epaper.ShowFrame.pixels max_size:15000
+
+epaper.Response.detail max_size:64

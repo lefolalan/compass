@@ -15,8 +15,20 @@ if(NOT EXISTS ${panel_overlay})
 endif()
 list(APPEND EXTRA_DTC_OVERLAY_FILE ${panel_overlay})
 
+# The Wi-Fi credentials stay out of git, see wifi.conf.example.
+set(wifi_conf ${CMAKE_CURRENT_SOURCE_DIR}/wifi.conf)
+if(EXISTS ${wifi_conf})
+  list(APPEND EXTRA_CONF_FILE ${wifi_conf})
+else()
+  message(WARNING "fw/wifi.conf is missing, this firmware will not join any Wi-Fi network. "
+                  "Copy fw/wifi.conf.example to fw/wifi.conf and fill it in.")
+endif()
+
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(epaper_notes)
+
+list(APPEND CMAKE_MODULE_PATH ${ZEPHYR_BASE}/modules/nanopb)
+include(nanopb)
 
 # Generated sources live outside src/ or below it, and include its headers.
 target_include_directories(app PRIVATE src)
@@ -24,9 +36,14 @@ target_include_directories(app PRIVATE src)
 target_sources(app PRIVATE
   src/main.c
   src/canvas.c
+  src/upload_server.c
+  src/wifi_link.c
   src/fonts/font_title.c
   src/fonts/font_body.c
 )
+
+# The upload protocol, generated as proto/epaper.pb.h in the build directory.
+zephyr_nanopb_sources(app proto/epaper.proto)
 
 # assets/picture.png is dithered to 1 bpp and compiled in at build time.
 set(picture_c ${CMAKE_CURRENT_BINARY_DIR}/picture.c)
